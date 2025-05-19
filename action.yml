@@ -1,0 +1,39 @@
+name: "Check new/changed code coverage"
+
+inputs:
+    fail-under:
+        description: "Target coverage percentage (0-100)"
+        type: number
+        default: 80
+    coverage-path:
+        description: "Path to coverage reports (uses common defaults if not specified)"
+        type: string
+        default: "coverage/clover.xml"
+    compare-branch:
+        description: "Branch to compare coverage against"
+        type: string
+        default: ${{ github.event.pull_request.base.ref }}
+    artifact-name:
+        description: "Name of the artifact containing coverage reports"
+        type: string
+        default: "coverage-xml"
+
+runs:
+    using: "composite"
+    steps:
+        - name: Setup Python
+          uses: actions/setup-python@v4
+          with:
+              python-version: "3.x"
+
+        - name: Install diff-cover
+          run: pip install diff-cover
+
+        - name: Fetch base branch for comparison
+          run: |
+              git fetch origin ${{ github.event.pull_request.base.ref }}
+              git checkout ${{ github.event.pull_request.head.sha }}
+
+        - name: Check coverage
+          run: |
+              diff-cover ${{ inputs.coverage-path }} --compare-branch=origin/${{ inputs.compare-branch }} --fail-under=${{ inputs.fail-under }}
