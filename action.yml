@@ -27,13 +27,16 @@ runs:
               python-version: "3.x"
 
         - name: Install diff-cover
+          shell: bash
           run: pip install diff-cover
 
         - name: Fetch base branch for comparison
+          shell: bash
           run: |
               git fetch origin ${{ github.event.pull_request.base.ref }}
               git checkout ${{ github.event.pull_request.head.sha }}
 
         - name: Check coverage
+          shell: bash
           run: |
               diff-cover ${{ inputs.coverage-path }} --compare-branch=origin/${{ inputs.compare-branch }} --fail-under=${{ inputs.fail-under }}
