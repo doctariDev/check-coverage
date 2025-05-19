@@ -13,10 +13,6 @@ inputs:
         description: "Branch to compare coverage against"
         type: string
         default: ${{ github.event.pull_request.base.ref }}
-    artifact-name:
-        description: "Name of the artifact containing coverage reports"
-        type: string
-        default: "coverage-xml"
 
 runs:
     using: "composite"
