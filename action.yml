@@ -13,6 +13,10 @@ inputs:
         description: "Branch to compare coverage against"
         type: string
         default: ${{ github.event.pull_request.base.ref }}
+    exclude:
+        description: "Exclude files from coverage check (whitespace-separated list)"
+        type: string
+        default: ""
 
 runs:
     using: "composite"
@@ -35,4 +39,4 @@ runs:
         - name: Check coverage
           shell: bash
           run: |
-              diff-cover ${{ inputs.coverage-path }} --compare-branch=origin/${{ inputs.compare-branch }} --fail-under=${{ inputs.fail-under }}
+              diff-cover ${{ inputs.coverage-path }} --compare-branch=origin/${{ inputs.compare-branch }} --fail-under=${{ inputs.fail-under }} --exclude=${{ inputs.exclude }}
