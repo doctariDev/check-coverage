@@ -39,4 +39,4 @@ runs:
         - name: Check coverage
           shell: bash
           run: |
-              diff-cover ${{ inputs.coverage-path }} --compare-branch=origin/${{ inputs.compare-branch }} --fail-under=${{ inputs.fail-under }} --exclude=${{ inputs.exclude }}
+              diff-cover ${{ inputs.coverage-path }} --compare-branch=origin/${{ inputs.compare-branch }} --fail-under=${{ inputs.fail-under }} --exclude ${{ inputs.exclude }}
