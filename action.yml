@@ -40,9 +40,12 @@ runs:
           shell: bash
           run: |
               diff-cover ${{ inputs.coverage-path }} --compare-branch=origin/${{ inputs.compare-branch }} --fail-under=${{ inputs.fail-under }} --exclude ${{ inputs.exclude }} > coverage-report.txt
-              # remove empty lines
-              sed -i '' '/^[[:space:]]*$/d' coverage-report.txt
 
+        - name: Remove empty lines
+          if: always()
+          shell: bash
+          run: |
+              sed -i '' '/^[[:space:]]*$/d' coverage-report.txt
               # debug:
               cat coverage-report.txt
 
