@@ -43,6 +43,9 @@ runs:
               # remove empty lines
               sed -i '' '/^[[:space:]]*$/d' coverage-report.txt
 
+              # debug:
+              cat coverage-report.txt
+
         - name: Post coverage comment
           if: always()
           uses: actions/github-script@v6
