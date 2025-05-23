@@ -60,12 +60,14 @@ runs:
                   const existingComment = comments.find(comment => comment.body.startsWith('### Code Coverage Report'));
 
                   if (existingComment) {
+                      console.log(`Updating existing comment with ID: ${existingComment.id}`);
                       await github.rest.issues.updateComment({
                           ...context.repo,
                           comment_id: existingComment.id,
                           body: commentBody,
                       });
                   } else {
+                      console.log('Creating new comment');
                       await github.rest.issues.createComment({
                           ...context.repo,
                           issue_number: context.issue.number,
