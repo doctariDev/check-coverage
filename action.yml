@@ -42,6 +42,7 @@ runs:
               diff-cover ${{ inputs.coverage-path }} --compare-branch=origin/${{ inputs.compare-branch }} --fail-under=${{ inputs.fail-under }} --exclude ${{ inputs.exclude }} > coverage-report.txt
 
         - name: Post coverage comment
+          if: always()
           uses: actions/github-script@v6
           with:
               script: |
