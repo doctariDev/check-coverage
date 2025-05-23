@@ -45,7 +45,7 @@ runs:
           if: always()
           shell: bash
           run: |
-              sed -i '' '/^[[:space:]]*$/d' coverage-report.txt
+              sed -i '/^[[:space:]]*$/d' coverage-report.txt
               # debug:
               cat coverage-report.txt
 
