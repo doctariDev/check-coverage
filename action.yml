@@ -39,4 +39,40 @@ runs:
         - name: Check coverage
           shell: bash
           run: |
-              diff-cover ${{ inputs.coverage-path }} --compare-branch=origin/${{ inputs.compare-branch }} --fail-under=${{ inputs.fail-under }} --exclude ${{ inputs.exclude }}
+              diff-cover ${{ inputs.coverage-path }} --compare-branch=origin/${{ inputs.compare-branch }} --fail-under=${{ inputs.fail-under }} --exclude ${{ inputs.exclude }} > coverage-report.txt
+
+        - name: Remove empty lines
+          if: always()
+          shell: bash
+          run: |
+              sed -i '/^[[:space:]]*$/d' coverage-report.txt
+
+        - name: Post coverage comment
+          if: always()
+          uses: actions/github-script@v6
+          with:
+              script: |
+                  const fs = require('fs');
+                  const coverageReport = fs.readFileSync('coverage-report.txt', 'utf8');
+                  const commentBody = `### Code Coverage Report\n\`\`\`\n${coverageReport}\n\`\`\``;
+
+                  const { data: comments } = await github.rest.issues.listComments({
+                      ...context.repo,
+                      issue_number: context.issue.number,
+                  });
+
+                  const existingComment = comments.find(comment => comment.body.startsWith('### Code Coverage Report'));
+
+                  if (existingComment) {
+                      await github.rest.issues.updateComment({
+                          ...context.repo,
+                          comment_id: existingComment.id,
+                          body: commentBody,
+                      });
+                  } else {
+                      await github.rest.issues.createComment({
+                          ...context.repo,
+                          issue_number: context.issue.number,
+                          body: commentBody,
+                      });
+                  }
