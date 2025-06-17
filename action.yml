@@ -17,38 +17,57 @@ inputs:
         description: "Exclude files from coverage check (whitespace-separated list)"
         type: string
         default: ""
+    diff-lines-threshold:
+        description: "Skip coverage check if changed lines are below this threshold (0 to always run)"
+        type: number
+        default: 0
 
 runs:
     using: "composite"
     steps:
+        - name: Check changed lines count
+          if: inputs.diff-lines-threshold > 0
+          id: check-lines
+          shell: bash
+          run: |
+              git fetch origin ${{ inputs.compare-branch }}
+              CHANGED_LINES=$(git diff --numstat origin/${{ inputs.compare-branch }}...HEAD | awk '{sum += $1 + $2} END {print sum+0}')
+              echo "changed-lines=$CHANGED_LINES" >> $GITHUB_OUTPUT
+              echo "skip-coverage=$([[ $CHANGED_LINES -lt ${{ inputs.diff-lines-threshold }} ]] && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
+              echo "Changed lines: $CHANGED_LINES, threshold: ${{ inputs.diff-lines-threshold }}"
+
         - name: Setup Python
+          if: inputs.diff-lines-threshold == 0 || steps.check-lines.outputs.skip-coverage != 'true'
           uses: actions/setup-python@v4
           with:
               python-version: "3.x"
 
         - name: Install diff-cover
+          if: inputs.diff-lines-threshold == 0 || steps.check-lines.outputs.skip-coverage != 'true'
           shell: bash
           run: pip install diff-cover
 
         - name: Fetch base branch for comparison
+          if: inputs.diff-lines-threshold == 0 || steps.check-lines.outputs.skip-coverage != 'true'
           shell: bash
           run: |
               git fetch origin ${{ github.event.pull_request.base.ref }}
               git checkout ${{ github.event.pull_request.head.sha }}
 
         - name: Check coverage
+          if: inputs.diff-lines-threshold == 0 || steps.check-lines.outputs.skip-coverage != 'true'
           shell: bash
           run: |
               diff-cover ${{ inputs.coverage-path }} --compare-branch=origin/${{ inputs.compare-branch }} --fail-under=${{ inputs.fail-under }} --exclude ${{ inputs.exclude }} > coverage-report.txt
 
         - name: Remove empty lines
-          if: always()
+          if: always() && (inputs.diff-lines-threshold == 0 || steps.check-lines.outputs.skip-coverage != 'true')
           shell: bash
           run: |
               sed -i '/^[[:space:]]*$/d' coverage-report.txt
 
         - name: Post coverage comment
-          if: always()
+          if: always() && (inputs.diff-lines-threshold == 0 || steps.check-lines.outputs.skip-coverage != 'true')
           uses: actions/github-script@v6
           with:
               script: |
