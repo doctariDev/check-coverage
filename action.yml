@@ -25,8 +25,15 @@ inputs:
 runs:
     using: "composite"
     steps:
+        - name: Always pass if not called for a pull request
+          if: github.event_name != 'pull_request'
+          shell: bash
+          run: |
+              echo "Not a pull request event, skipping coverage check."
+              exit 0
+
         - name: Check changed lines count
-          if: inputs.diff-lines-threshold > 0
+          if: github.event_name == 'pull_request' && inputs.diff-lines-threshold > 0
           id: check-lines
           shell: bash
           run: |
@@ -37,37 +44,37 @@ runs:
               echo "Changed lines: $CHANGED_LINES, threshold: ${{ inputs.diff-lines-threshold }}"
 
         - name: Setup Python
-          if: inputs.diff-lines-threshold == 0 || steps.check-lines.outputs.skip-coverage != 'true'
+          if: github.event_name == 'pull_request' && (inputs.diff-lines-threshold == 0 || steps.check-lines.outputs.skip-coverage != 'true')
           uses: actions/setup-python@v4
           with:
               python-version: "3.x"
 
         - name: Install diff-cover
-          if: inputs.diff-lines-threshold == 0 || steps.check-lines.outputs.skip-coverage != 'true'
+          if: github.event_name == 'pull_request' && (inputs.diff-lines-threshold == 0 || steps.check-lines.outputs.skip-coverage != 'true')
           shell: bash
           run: pip install diff-cover
 
         - name: Fetch base branch for comparison
-          if: inputs.diff-lines-threshold == 0 || steps.check-lines.outputs.skip-coverage != 'true'
+          if: github.event_name == 'pull_request' && (inputs.diff-lines-threshold == 0 || steps.check-lines.outputs.skip-coverage != 'true')
           shell: bash
           run: |
               git fetch origin ${{ github.event.pull_request.base.ref }}
               git checkout ${{ github.event.pull_request.head.sha }}
 
         - name: Check coverage
-          if: inputs.diff-lines-threshold == 0 || steps.check-lines.outputs.skip-coverage != 'true'
+          if: github.event_name == 'pull_request' && (inputs.diff-lines-threshold == 0 || steps.check-lines.outputs.skip-coverage != 'true')
           shell: bash
           run: |
               diff-cover ${{ inputs.coverage-path }} --compare-branch=origin/${{ inputs.compare-branch }} --fail-under=${{ inputs.fail-under }} --exclude ${{ inputs.exclude }} > coverage-report.txt
 
         - name: Remove empty lines
-          if: always() && (inputs.diff-lines-threshold == 0 || steps.check-lines.outputs.skip-coverage != 'true')
+          if: always() && github.event_name == 'pull_request' && (inputs.diff-lines-threshold == 0 || steps.check-lines.outputs.skip-coverage != 'true')
           shell: bash
           run: |
               sed -i '/^[[:space:]]*$/d' coverage-report.txt
 
         - name: Post coverage comment
-          if: always() && (inputs.diff-lines-threshold == 0 || steps.check-lines.outputs.skip-coverage != 'true')
+          if: always() && github.event_name == 'pull_request' && (inputs.diff-lines-threshold == 0 || steps.check-lines.outputs.skip-coverage != 'true')
           uses: actions/github-script@v6
           with:
               script: |
