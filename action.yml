@@ -59,8 +59,6 @@ runs:
           shell: bash
           run: |
               git fetch origin ${{ github.event.pull_request.base.ref }}
-              git fetch origin ${{ github.event.pull_request.head.ref }}
-              git checkout ${{ github.event.pull_request.head.sha }}
 
         - name: Check coverage
           if: github.event_name == 'pull_request' && (inputs.diff-lines-threshold == 0 || steps.check-lines.outputs.skip-coverage != 'true')
